@@ -26,6 +26,10 @@ export default function TypewriteModule() {
             SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)]
         )
         setResults(null)
+        if (tr_ref.current) {
+            console.log("Focusing on typewriter")
+            tr_ref.current.focus();
+        }
     }, []);
 
     const handleReloadOnTab = React.useCallback((e: React.KeyboardEvent) => {
@@ -33,15 +37,12 @@ export default function TypewriteModule() {
             e.preventDefault();
             reload();
             // focus on the typewriter div
-            if (tr_ref.current) {
-                console.log("Focusing on typewriter")
-                tr_ref.current.focus();
-            }
         }
     }, [reload]);
 
     return (
         <div
+            ref={tr_ref}
             style={{height: "50vh"}}
             className={"w-full flex flex-row items-center justify-center"}
             onKeyDown={handleReloadOnTab}>
@@ -50,8 +51,7 @@ export default function TypewriteModule() {
             ) : (
                 <div className={"w-2/3"}>
                     <TypeWriter
-                        ref={tr_ref}
-                        text={type_text}
+                        text={type_text.slice(0, 20)}
                         theme={TYPEWRITER_DEFAULT_THEME}
                         onFinish={(results) => {
                             setResults(results)

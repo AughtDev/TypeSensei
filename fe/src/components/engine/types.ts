@@ -13,7 +13,7 @@ export interface TypeWriterStats {
 
 export interface TypeLog {
     timestamp_t: number
-    char: string
+    typed_key: string
 }
 
 export interface TypeSessionResults {

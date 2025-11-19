@@ -24,7 +24,8 @@ export default function SiteHeader({pages} : SiteHeaderProps) {
                     <a
                         key={page.href} href={page.href}
                         style={{
-                            letterSpacing: "1px"
+                            letterSpacing: "1px",
+                            textUnderlineOffset: "4px"
                         }}
                         className={`text-md hover:underline ${
                             curr_href === page.href ? "underline" : ""
