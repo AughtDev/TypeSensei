@@ -51,7 +51,7 @@ export default function TypewriteModule() {
             ) : (
                 <div className={"w-2/3"}>
                     <TypeWriter
-                        text={type_text.slice(0, 20)}
+                        text={type_text}
                         theme={TYPEWRITER_DEFAULT_THEME}
                         onFinish={(results) => {
                             setResults(results)
