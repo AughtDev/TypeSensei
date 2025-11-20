@@ -6,6 +6,7 @@ export default function Home() {
             }}
             className="flex flex-col items-center justify-center w-full">
             {/*<p className={"text-lg"}>Welcome to Type Sensei :)</p>*/}
+            jk
         </div>
     );
 }
