@@ -2,6 +2,9 @@
 import React from "react";
 import SAMPLE_TEXTS from "@/data/text";
 import {TetrisSessionResults} from "@/components/engine/types";
+import Board from "@/components/engine/Board";
+import ResultsSection from "@/pages/home/sections/results";
+import {Application} from "@pixi/react";
 
 export default function TetrisModule() {
     const tr_ref = React.useRef<HTMLDivElement | null>(null);
@@ -33,9 +36,16 @@ export default function TetrisModule() {
     return (
         <div
             ref={tr_ref}
-            style={{height: "50vh"}}
+            style={{height: "80vh"}}
             className={"w-full flex flex-row items-center justify-center"}
             onKeyDown={handleReloadOnTab}>
+            {results !== null ? (
+                <ResultsSection results={results}/>
+            ) : (
+                <Board text={"testing testing hello world everybody"} onFinish={(results) => {
+                    setResults(results)
+                }}/>
+            )}
         </div>
     )
 }

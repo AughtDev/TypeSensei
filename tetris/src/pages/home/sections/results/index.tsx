@@ -7,6 +7,10 @@ interface ResultsSectionProps {
 
 export default function ResultsSection({results} : ResultsSectionProps) {
     return (
-        <div></div>
+        <div className={"flex flex-col items-center justify-center"}>
+            <h2 className={"text-2xl font-bold mb-4"}>Session Results</h2>
+            <p className={"text-lg"}>Number of Words: {results.num_words}</p>
+            <p className={"text-lg"}>Completed: {results.completed ? "Yes" : "No"}</p>
+        </div>
     )
  }

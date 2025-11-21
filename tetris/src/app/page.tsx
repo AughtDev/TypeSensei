@@ -1,4 +1,8 @@
+import React from "react";
+import TetrisModule from "@/pages/home";
+
 export default function Home() {
+
     return (
         <div
             style={{
@@ -6,7 +10,7 @@ export default function Home() {
             }}
             className="flex flex-col items-center justify-center w-full">
             {/*<p className={"text-lg"}>Welcome to Type Sensei :)</p>*/}
-            jk
+            <TetrisModule/>
         </div>
     );
 }
