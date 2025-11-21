@@ -1,5 +1,6 @@
 import React from 'react';
 import {TetrisSessionResults} from "@/components/engine/types";
+import {Application} from "@pixi/react";
 
 interface TetrisBoardProps {
     text: string
@@ -15,7 +16,7 @@ interface TetrisWord {
 
 const SPEED_DELTA_PER_WORD = 0.5; // seconds per word
 
-export default function TetrisBoard({text,onFinish} : TetrisBoardProps) {
+export default function TetrisBoard({text, onFinish}: TetrisBoardProps) {
 
     const words: TetrisWord[] = React.useMemo(() => {
         const word_list = text.split(" ");
@@ -29,19 +30,20 @@ export default function TetrisBoard({text,onFinish} : TetrisBoardProps) {
 
     return (
         <div className={"w-full h-full p-2"}>
-            {words.map((word, index) => (
-                <div
-                    id={"tetris-word-" + index}
-                    key={index}
-                    className={"absolute text-2xl"}
-                    style={{
-                        left: `${word.x}%`,
-                        animation: `fall ${word.speed}s linear ${word.delay}ms forwards`
-                    }}
-                >
-                    {word.text}
-                </div>
-            ))}
+            <Application width={500} height={800} backgroundColor={0x000000}>
+                {words.map((word, index) => (
+                    <div
+                        id={"tetris-word-" + index}
+                        key={index}
+                        className={"absolute text-2xl"}
+                        style={{
+                            left: `${word.x}%`,
+                            animation: `fall ${word.speed}s linear ${word.delay}ms forwards`
+                        }}>
+                        {word.text}
+                    </div>
+                ))}
+            </Application>
         </div>
     )
- }
+}

@@ -5,6 +5,12 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+    {
+        rules: {
+            // impure functions are allowed in Next.js components
+            "functional/no-impure-functions": "off"
+        }
+    },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
