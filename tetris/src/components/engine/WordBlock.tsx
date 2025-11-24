@@ -37,7 +37,7 @@ export default function WordBlock
             const width = written_ref.current.width as number;
             setWrittenWidth(width);
         }
-    }, [word,typed_word]);
+    }, [word, typed_word]);
 
     const num_written_letters = React.useMemo(() => {
         if (typed_word.trim().length > word.length) {
@@ -50,19 +50,23 @@ export default function WordBlock
         return ln;
     }, [typed_word, word]);
 
+    const {font_size, written_color, unwritten_color} = React.useMemo(() => {
+        return {font_size: 18, written_color: 0x00ff00, unwritten_color: 0xffffff};
+    }, []);
+
     return (
         <pixiContainer x={x} y={y} rotation={rotation}>
             {/*{num_written_letters > 0 && (*/}
             <pixiText
                 ref={written_ref}
                 text={word.slice(0, num_written_letters)}
-                style={{fontSize: 14, fill: 0x00ff00}}
+                style={{fontSize: font_size, fill: written_color}}
                 x={0}
                 anchor={{x: 0, y: 0.5}}/>
             {/*)}*/}
             <pixiText
                 text={word.slice(num_written_letters)}
-                style={{fontSize: 14}}
+                style={{fontSize: font_size, fill: unwritten_color}}
                 x={written_width}
                 anchor={{x: 0, y: 0.5}}/>
         </pixiContainer>

@@ -4,7 +4,6 @@ import SAMPLE_TEXTS from "@/data/text";
 import {TetrisSessionResults} from "@/components/engine/types";
 import Board from "@/components/engine/Board";
 import ResultsSection from "@/pages/home/sections/results";
-import {Application} from "@pixi/react";
 
 export default function TetrisModule() {
     const tr_ref = React.useRef<HTMLDivElement | null>(null);
@@ -36,13 +35,13 @@ export default function TetrisModule() {
     return (
         <div
             ref={tr_ref}
-            style={{height: "80vh"}}
-            className={"w-full flex flex-row items-center justify-center"}
+            style={{height: "100%"}}
+            className={"w-full flex flex-row items-center justify-center bg-gray-900"}
             onKeyDown={handleReloadOnTab}>
             {results !== null ? (
-                <ResultsSection results={results}/>
+                <ResultsSection results={results} reload={reload}/>
             ) : (
-                <Board text={"testing testing hello world everybody"} onFinish={(results) => {
+                <Board text={type_text} onFinish={(results) => {
                     setResults(results)
                 }}/>
             )}
