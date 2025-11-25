@@ -2,7 +2,7 @@
 import React from "react";
 import SAMPLE_TEXTS from "@/data/text";
 import {TetrisSessionResults} from "@/components/engine/types";
-import Board from "@/components/engine/Board";
+import Board from "@/components/engine/board/Board";
 import ResultsSection from "@/pages/home/sections/results";
 
 export default function TetrisModule() {
