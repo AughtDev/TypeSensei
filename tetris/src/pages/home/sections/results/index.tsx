@@ -6,7 +6,7 @@ interface ResultsSectionProps {
     reload: () => void
 }
 
-export default function ResultsSection({results,reload} : ResultsSectionProps) {
+export default function ResultsSection({results, reload}: ResultsSectionProps) {
     const btn_ref = React.useRef<HTMLButtonElement | null>(null);
 
     // focus on the button on mount
@@ -18,6 +18,7 @@ export default function ResultsSection({results,reload} : ResultsSectionProps) {
         <div className={"flex flex-col items-center justify-center"}>
             <h2 className={"text-2xl font-bold mb-4"}>Session Results</h2>
             <p className={"text-lg"}>Number of Words: {results.num_words}</p>
+            <p className={"text-lg"}>Score: {results.score}</p>
             <p className={"text-lg"}>Completed: {results.completed ? "Yes" : "No"}</p>
             <button
                 ref={btn_ref}
@@ -27,4 +28,4 @@ export default function ResultsSection({results,reload} : ResultsSectionProps) {
             </button>
         </div>
     )
- }
+}

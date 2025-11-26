@@ -3,9 +3,9 @@ import React from 'react';
 import {TetrisSessionResults, TetrisWordSpecs} from "@/components/engine/types";
 import {Application, useTick} from "@pixi/react";
 import WordBlock from "@/components/engine/board/WordBlock";
-import {processTypedKey, updateWordsOnWrittenTextChange} from "@/components/engine/helpers";
+import {generateRandomID, processTypedKey} from "@/components/engine/helpers";
 import BoardStats from "@/components/engine/board/BoardStats";
-import TetrisBoardContext, {TetrisBoardContextProps} from "@/components/engine/context";
+import TetrisBoardContext, {BoardSignal, TetrisBoardContextProps} from "@/components/engine/context";
 
 interface TetrisBoardProps {
     text: string
@@ -13,6 +13,17 @@ interface TetrisBoardProps {
 }
 
 const MONO_LETTER_WIDTH = 10; // approximate width of a monospace letter in pixels
+
+function signalToBgColor(signal: BoardSignal): string {
+    switch (signal) {
+        case BoardSignal.WORD_MISMATCH:
+            return 'bg-red-900';
+        case BoardSignal.WORD_COMPLETE:
+            return 'bg-green-700';
+        default:
+            return '';
+    }
+}
 
 export default function Board({text, onFinish}: TetrisBoardProps) {
     // if there is no text throw an error
@@ -25,8 +36,39 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
     const [written_text, setWrittenText] = React.useState<string>("")
     const [words, setWords] = React.useState<TetrisWordSpecs[]>([])
     const [score, setScore] = React.useState<number>(0)
+    const [signal, setSignal] = React.useState<BoardSignal>(BoardSignal.NONE)
 
-    // region INITIALIZE GAME AND SET KILL CONDITION
+    // region GAME FUNCTIONS
+    // ? ........................
+
+    const animateWordFall = React.useCallback((delta_y: number, last_drop_idx: number) => {
+        // console.log("Animating word fall by ", delta_y, " for words up to index ", last_drop_idx);
+        setWords(prevWords => prevWords
+            .map((word) => {
+                if (word.position > last_drop_idx || word.done) {
+                    return word;
+                }
+                return ({
+                    ...word,
+                    y: word.y + delta_y
+                });
+            }));
+    }, []);
+
+    const makeBoardSignal = React.useCallback((signal: BoardSignal, duration_ms?: number) => {
+        setSignal(signal);
+        if (duration_ms) {
+            setTimeout(() => {
+                setSignal(BoardSignal.NONE);
+            }, duration_ms);
+        }
+    }, []);
+
+    // ? ........................
+    // endregion ........................
+
+
+    // region GAME STATE CONTROL
     // ? ........................
 
     // initialize words when text changes
@@ -37,6 +79,7 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                 // filter out punctuation and spaces or empty strings
                 .filter(word => word.trim().length > 0)
                 .map((word, index) => ({
+                        id: generateRandomID(),
                         text: word,
                         x: Math.floor(Math.random() * (500 - word.length * MONO_LETTER_WIDTH)), // random x position within board width
                         position: index,
@@ -60,75 +103,85 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
             onFinish({
                 num_words: words.length,
                 completed: true,
+                score,
             });
         } else if (words.some(word => word.y > 600)) {
             onFinish({
                 num_words: words.filter(w => w.done).length,
                 completed: false,
+                score,
             });
         }
-    }, [onFinish, words]);
+    }, [onFinish, score, words]);
 
     // when no word matches the written_text, clear it and flash red
     React.useEffect(() => {
-        if (words.length === 0) {
+        if (words.length === 0 || written_text.length === 0) {
             return
         }
-        const {words: updated_words, text: updated_text} = updateWordsOnWrittenTextChange(written_text, words);
-        setWords(updated_words);
-        setWrittenText(updated_text);
+        const matches_word = words.some(word => word.text.startsWith(written_text.trim()) && !word.done && word.y > 0);
 
-        // update score based on completed words
-        const completed_words = updated_words.filter(word => word.done).map(w => w.text.length).reduce((a, b) => a + b, 0);
-        setScore(completed_words * 10); // each letter is worth 10 points
-
-        // if the words have been set to red, reset after 1000ms
-        if (updated_words.some(word => word.color === 0xff0000)) {
-            console.log("setting timeout to reset colors from red")
-            setTimeout(() => {
-                console.log("reset colors from red")
-                setWords(prevWords => prevWords.map(word => ({
-                    ...word,
-                    color: 0xffffff
-                })));
-            }, 500);
-            // return () => clearTimeout(timeout);
+        if (!matches_word) {
+            setWrittenText("")
+            makeBoardSignal(BoardSignal.WORD_MISMATCH, 500);
+            if (written_text.length > 2) {
+                // get the words that were almost matched and duplicate them at the top with a position of 0
+                const test_text = written_text.slice(0, -1);
+                const almost_matched_words = words.filter(word => word.text.startsWith(test_text) && !word.done && word.y > 0);
+                if (almost_matched_words.length > 0) {
+                    setWords(prev => [
+                        ...prev,
+                        ...almost_matched_words.map(word => ({
+                            ...word,
+                            id: generateRandomID(),
+                            y: 0,
+                            x: Math.floor(Math.random() * (500 - word.text.length * MONO_LETTER_WIDTH)),
+                            position: 0
+                        }))
+                    ])
+                }
+            }
+        } else {
+            const completed_word = words.find(word => (word.text + ' ') === written_text && !word.done && word.y > 0);
+            if (completed_word) {
+                setWords(prev => {
+                    if (completed_word) {
+                        // word completed
+                        return prev.map(word => word.id === completed_word.id ? {
+                            ...word,
+                            done: true,
+                        } : word);
+                    }
+                    return prev;
+                })
+                makeBoardSignal(BoardSignal.WORD_COMPLETE, 500);
+                setWrittenText("")
+            }
         }
-
     }, [written_text]);
 
+    // update score
+    React.useEffect(() => {
+        const completed_words = words.filter(word => word.done).map(w => w.text.length).reduce((a, b) => a + b, 0);
+        setScore(completed_words * 10); // each letter is worth 10 points
+    }, [words]);
 
     // ? ........................
     // endregion ........................
-
 
     const context: TetrisBoardContextProps = React.useMemo(() => ({
         written_text,
         content: {
             text,
             words,
-            completeWord: (position: number) => {
-            }
         },
         graphics: {
-            animateWordFall: (delta_y: number, last_drop_idx: number) => {
-                // console.log("Animating word fall by ", delta_y, " for words up to index ", last_drop_idx);
-                setWords(prevWords => prevWords
-                    .map((word, i) => {
-                        if (i > last_drop_idx || word.done) {
-                            return word;
-                        }
-                        return ({
-                            ...word,
-                            y: word.y + delta_y
-                        });
-                    }));
-            }
+            animateWordFall, signal, makeBoardSignal
         },
         progress: {
             score
         }
-    }), [score, text, words, written_text, setWords]);
+    }), [written_text, text, words, animateWordFall, signal, makeBoardSignal, score]);
 
     return (
         <div
@@ -137,10 +190,16 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
             e.preventDefault();
             setWrittenText(prev => processTypedKey(prev, e.key))
         }}
-            className={"w-full h-full p-2 flex flex-row items-center justify-center border-0 outline-0"}>
+            className={
+                `
+                w-full h-full p-2
+                flex flex-row items-center justify-center
+                border-0 outline-0 ${signalToBgColor(signal)}
+                `
+            }>
             <TetrisBoardContext.Provider value={context}>
                 <div style={{height: 600, width: 500}} className={"border-2 border-white"}>
-                    <Application width={495} height={595} backgroundColor={0x000000} antialias>
+                    <Application width={495} height={595} backgroundColor={0x000000} antialias={false} autoDensity resolution={window.devicePixelRatio}>
                         <WordBlocks/>
                     </Application>
                 </div>
@@ -197,7 +256,7 @@ function WordBlocks() {
     })
 
     return words
-        .filter((w, i) => i <= dropping_words.idx && !w.done)
+        .filter((w) => w.position <= dropping_words.idx && !w.done)
         .map((word, index) => {
             return (
                 <WordBlock
