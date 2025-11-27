@@ -1,9 +1,14 @@
 "use client"
 import React from 'react';
-import {TetrisSessionResults, TetrisWordSpecs} from "@/components/engine/types";
+import {
+    TetrisSessionPerformanceStats,
+    TetrisSessionResults,
+    TetrisSessionScore,
+    TetrisWordSpecs
+} from "@/components/engine/types";
 import {Application, useTick} from "@pixi/react";
 import WordBlock from "@/components/engine/board/WordBlock";
-import {generateRandomID, processTypedKey} from "@/components/engine/helpers";
+import {calculateTetrisScore, generateRandomID, processTypedKey} from "@/components/engine/helpers";
 import BoardStats from "@/components/engine/board/BoardStats";
 import TetrisBoardContext, {BoardSignal, TetrisBoardContextProps} from "@/components/engine/context";
 
@@ -35,8 +40,19 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
 
     const [written_text, setWrittenText] = React.useState<string>("")
     const [words, setWords] = React.useState<TetrisWordSpecs[]>([])
-    const [score, setScore] = React.useState<number>(0)
+    const [score, setScore] = React.useState<TetrisSessionScore>({
+        score: 0,
+        wpm: 0,
+        streak: 0,
+        accuracy: 0,
+        fails: 0
+    })
     const [signal, setSignal] = React.useState<BoardSignal>(BoardSignal.NONE)
+
+    const [stats, setStats] = React.useState<TetrisSessionPerformanceStats>({
+        key_log: [],
+        words_completed: []
+    })
 
     // region GAME FUNCTIONS
     // ? ........................
@@ -62,6 +78,16 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                 setSignal(BoardSignal.NONE);
             }, duration_ms);
         }
+    }, []);
+
+    const playSuccessSound = React.useCallback(() => {
+        const audio = new Audio('./audio/success_1.wav');
+        audio.play().then()
+    }, []);
+
+    const playFailSound = React.useCallback(() => {
+        const audio = new Audio('./audio/fail_1.wav');
+        audio.play().then()
     }, []);
 
     // ? ........................
@@ -101,13 +127,15 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
         }
         if (words.every(word => word.done)) {
             onFinish({
-                num_words: words.length,
+                num_words_completed: words.filter(w => w.done).length,
+                num_words_failed: words.filter(w => !w.done).length,
                 completed: true,
                 score,
             });
         } else if (words.some(word => word.y > 600)) {
             onFinish({
-                num_words: words.filter(w => w.done).length,
+                num_words_completed: words.filter(w => w.done).length,
+                num_words_failed: words.filter(w => !w.done).length,
                 completed: false,
                 score,
             });
@@ -124,6 +152,7 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
         if (!matches_word) {
             setWrittenText("")
             makeBoardSignal(BoardSignal.WORD_MISMATCH, 500);
+            playFailSound();
             if (written_text.length > 2) {
                 // get the words that were almost matched and duplicate them at the top with a position of 0
                 const test_text = written_text.slice(0, -1);
@@ -131,7 +160,7 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                 if (almost_matched_words.length > 0) {
                     setWords(prev => [
                         ...prev,
-                        ...almost_matched_words.map(word => ({
+                        ...almost_matched_words.slice(0,1).map(word => ({
                             ...word,
                             id: generateRandomID(),
                             y: 0,
@@ -140,6 +169,18 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                         }))
                     ])
                 }
+                setStats(prev => ({
+                    ...prev,
+                    words_completed: [
+                        ...prev.words_completed,
+                        almost_matched_words.map(word => ({
+                            id: word.id,
+                            word: word.text,
+                            y_at_complete: word.y,
+                            success: false
+                        }))
+                    ]
+                }))
             }
         } else {
             const completed_word = words.find(word => (word.text + ' ') === written_text && !word.done && word.y > 0);
@@ -155,16 +196,28 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                     return prev;
                 })
                 makeBoardSignal(BoardSignal.WORD_COMPLETE, 500);
+                playSuccessSound();
                 setWrittenText("")
+                setStats(prev => ({
+                    ...prev,
+                    words_completed: [
+                        ...prev.words_completed,
+                        {
+                            id: completed_word.id,
+                            word: completed_word.text,
+                            y_at_complete: completed_word.y,
+                            success: true
+                        }
+                    ]
+                }))
             }
         }
     }, [written_text]);
 
     // update score
     React.useEffect(() => {
-        const completed_words = words.filter(word => word.done).map(w => w.text.length).reduce((a, b) => a + b, 0);
-        setScore(completed_words * 10); // each letter is worth 10 points
-    }, [words]);
+        setScore(calculateTetrisScore(stats))
+    }, [stats]);
 
     // ? ........................
     // endregion ........................
@@ -188,7 +241,19 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
             ref={board_ref}
             tabIndex={0} onKeyDown={(e) => {
             e.preventDefault();
-            setWrittenText(prev => processTypedKey(prev, e.key))
+            setWrittenText(prev => {
+                setStats(prevStats => ({
+                    ...prevStats,
+                    key_log: [
+                        ...prevStats.key_log,
+                        {
+                            char: e.key,
+                            timestamp: Date.now()
+                        }
+                    ]
+                }))
+                return processTypedKey(prev, e.key);
+            })
         }}
             className={
                 `
@@ -199,7 +264,8 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
             }>
             <TetrisBoardContext.Provider value={context}>
                 <div style={{height: 600, width: 500}} className={"border-2 border-white"}>
-                    <Application width={495} height={595} backgroundColor={0x000000} antialias={false} autoDensity resolution={window.devicePixelRatio}>
+                    <Application width={495} height={595} backgroundColor={0x000000} antialias={false} autoDensity
+                                 resolution={window.devicePixelRatio}>
                         <WordBlocks/>
                     </Application>
                 </div>
@@ -236,7 +302,7 @@ function WordBlocks() {
         // Move words down based on speed
         animateWordFall(speed * delta.deltaTime, dropping_words.idx);
 
-        const tgt_speed = 1.1 ** Math.floor(tt_time_ref.current / 1000)
+        const tgt_speed = 1.2 ** Math.floor(tt_time_ref.current / 1000)
         if (speed !== tgt_speed) {
             console.log("updating speed to ", tgt_speed)
             setSpeed(tgt_speed)
@@ -244,7 +310,7 @@ function WordBlocks() {
 
         const drop_interval = 1 / Math.sqrt(Math.ceil(tt_time_ref.current / 500))
         if (tt_time_ref.current > dropping_words.next_drop) {
-            console.log("dropping word index ", dropping_words.idx + 1, "out of ", words.length)
+            // console.log("dropping word index ", dropping_words.idx + 1, "out of ", words.length)
             setDroppingWords({
                 idx: Math.min(dropping_words.idx + 1, words.length - 1),
                 next_drop: dropping_words.next_drop + drop_interval * 100,

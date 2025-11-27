@@ -1,5 +1,5 @@
 import React from "react";
-import {TetrisWordSpecs} from "@/components/engine/types";
+import {TetrisSessionScore, TetrisWordSpecs} from "@/components/engine/types";
 
 export enum BoardSignal {
     NONE,
@@ -20,7 +20,7 @@ export interface TetrisBoardContextProps {
         makeBoardSignal: (signal: BoardSignal, duration_ms: number) => void
     }
     progress: {
-        score: number
+        score: TetrisSessionScore
     }
 }
 
@@ -40,7 +40,12 @@ const TetrisBoardContext = React.createContext<TetrisBoardContextProps>({
         }
     },
     progress: {
-        score: 0
+        score: {
+            score: 0,
+            wpm: 0,
+            streak: 0,
+            accuracy: 0
+        }
     }
 })
 

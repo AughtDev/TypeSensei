@@ -14,12 +14,17 @@ export default function ResultsSection({results, reload}: ResultsSectionProps) {
         btn_ref.current?.focus();
     }, []);
 
+    console.log("results are ", results);
+
     return (
         <div className={"flex flex-col items-center justify-center"}>
-            <h2 className={"text-2xl font-bold mb-4"}>Session Results</h2>
-            <p className={"text-lg"}>Number of Words: {results.num_words}</p>
-            <p className={"text-lg"}>Score: {results.score}</p>
-            <p className={"text-lg"}>Completed: {results.completed ? "Yes" : "No"}</p>
+            <p className={"text-5xl text-amber-300 pb-4"}>{results.score.score}</p>
+            <p className={"text-lg"}>WPM: {results.score.wpm}</p>
+            <p className={"text-lg"}>Accuracy: {results.score.accuracy}</p>
+            <p className={"text-lg"}>Fails: {results.score.fails}</p>
+
+            <p className={"text-lg"}>Completion: {Math.round((results.num_words_completed / (results.num_words_completed + results.num_words_failed)) * 100)}%</p>
+
             <button
                 ref={btn_ref}
                 className={"mt-4 px-4 py-2 bg-gray-200 font-semibold focus:border-0 focus:bg-white outline-0 text-black rounded"}

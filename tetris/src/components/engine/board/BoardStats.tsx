@@ -13,8 +13,16 @@ export default function BoardStats() {
              className={"border-1 border-white flex flex-col items-center justify-center gap-8 px-2 text-center text-white"}>
             <p className={"text-sm"}>Type the words before they reach the bottom!</p>
             <p className={"text-md text-green-300"}>{written_text}</p>
-            <p className={"text-sm"}>Words typed: {words.filter(w => w.done).length}</p>
-            <p className={"text-md"}>Score: {score}</p>
+            <p className={"text-lg text-yellow-600"}>{score.score}</p>
+            <p className={"text-md"}>WPM: {score.wpm}</p>
+            <p className={"text-md"}>Accuracy: {score.accuracy}</p>
+            <p className={"text-md text-yellow-400"}>Streak: {score.streak}</p>
+
+            {/* divider */}
+            <div className={"w-full border-t border-white/20"}/>
+
+            <p className={"text-sm"}>Words completed: {words.filter(w => w.done).length}</p>
+            <p className={"text-sm"}>Fails: {score.fails}</p>
         </div>
     )
 }

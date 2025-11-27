@@ -34,14 +34,10 @@ export default function WordBlock
     }, [word, typed_word]);
 
     const num_written_letters = React.useMemo(() => {
-        if (typed_word.trim().length > word.length) {
-            return 0
+        if (word.startsWith(typed_word)) {
+            return typed_word.trim().length;
         }
-        let ln = 0;
-        while (ln < typed_word.length && ln < word.length && typed_word[ln] === word[ln]) {
-            ln++;
-        }
-        return ln;
+        return 0
     }, [typed_word, word]);
 
     const {font_size, written_color, unwritten_color} = React.useMemo(() => {
