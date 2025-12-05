@@ -160,7 +160,7 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                 if (almost_matched_words.length > 0) {
                     setWords(prev => [
                         ...prev,
-                        ...almost_matched_words.slice(0,1).map(word => ({
+                        ...almost_matched_words.slice(0, 1).map(word => ({
                             ...word,
                             id: generateRandomID(),
                             y: 0,
@@ -173,7 +173,7 @@ export default function Board({text, onFinish}: TetrisBoardProps) {
                     ...prev,
                     words_completed: [
                         ...prev.words_completed,
-                        almost_matched_words.map(word => ({
+                        ...almost_matched_words.map(word => ({
                             id: word.id,
                             word: word.text,
                             y_at_complete: word.y,

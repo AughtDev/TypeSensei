@@ -56,7 +56,7 @@ export default function TetrisModule() {
         <div
             ref={tr_ref}
             style={{height: "100%"}}
-            className={"w-full flex flex-col items-center justify-center bg-black"}
+            className={"w-full flex flex-col items-center justify-center"}
             onKeyDown={handleReloadOnTab}>
             <div className="flex flex-row items-center justify-center gap-8 pt-2">
                 {/* Difficulty selector */}
